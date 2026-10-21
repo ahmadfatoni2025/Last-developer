@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Leam — Create your Universe
+   Custom Styles (supplements Tailwind CSS)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Base / Reset
+   -------------------------------------------------------------------------- */
+body {
+  background-color: #000000;
+  color: #EDEDED;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+               Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Hero Section — Ambient Warm Stage-Light Glow
+   -------------------------------------------------------------------------- */
+.hero-glow-bg {
+  background: radial-gradient(
+    circle at 75% 20%,
+    rgba(220, 140, 20, 0.38) 0%,
+    rgba(160, 80, 5, 0.15) 35%,
+    rgba(0, 0, 0, 0) 70%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   Phone Mockup Cards — Depth Shadow
+   -------------------------------------------------------------------------- */
+.card-mockup-shadow {
+  box-shadow:
+    0 20px 45px -10px rgba(0, 0, 0, 0.8),
+    0 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   Utility — Hide Scrollbars (clean in-UI displays)
+   -------------------------------------------------------------------------- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --------------------------------------------------------------------------
+   Creator Cards — Hover Scale (enhanced with CSS transition)
+   -------------------------------------------------------------------------- */
+.creator-card img {
+  transition: transform 0.5s ease;
+}
+.creator-card:hover img {
+  transform: scale(1.05);
+}
