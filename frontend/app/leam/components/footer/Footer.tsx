@@ -38,11 +38,9 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 group">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-[0_0_16px_rgba(99,102,241,0.4)]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L20 7V17L12 22L4 17V7L12 2Z" fill="white" fillOpacity="0.9"/>
-                </svg>
+                <img className="h-8 w-8" src="../assets/images/team/member-1.jpg" alt="Logo" />
               </div>
-              <span className="text-base font-semibold text-white">Leam</span>
+              <span className="text-base font-semibold text-white">Lazdev</span>
             </Link>
             <p className="mt-4 max-w-[220px] text-[13px] leading-relaxed text-white/35">
               Sistem digital yang rapi, cepat, dan mudah dipakai untuk bisnis Indonesia.

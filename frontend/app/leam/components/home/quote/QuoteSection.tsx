@@ -24,7 +24,7 @@ export function QuoteSection() {
         </p>
         <div className="mt-8 flex items-center justify-center gap-3">
           <div className="h-px w-12 bg-white/20" />
-          <p className="text-sm font-medium text-white/40">Leam Collective — Sistem Digital untuk Bisnis Indonesia</p>
+          <p className="text-sm font-medium text-white/40">Ahmad Fatoni — Founder Leafiess & Sistem Digital Bisnis Indonesia</p>
           <div className="h-px w-12 bg-white/20" />
         </div>
       </div>
