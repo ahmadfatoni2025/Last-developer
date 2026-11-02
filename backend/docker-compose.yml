@@ -1,0 +1,56 @@
+version: '3.9'
+
+services:
+  # ─── MySQL Database ──────────────────────────────────
+  db:
+    image: mysql:8.4
+    container_name: lazdev_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: lazdev_db
+      MYSQL_USER: lazdev_user
+      MYSQL_PASSWORD: lazdev_pass
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-prootpassword']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend API ─────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lazdev_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: mysql://lazdev_user:lazdev_pass@db:3306/lazdev_db
+      NODE_ENV: production
+      PORT: 5000
+    ports:
+      - '5000:5000'
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ─── Adminer (DB GUI) ────────────────────────────────
+  adminer:
+    image: adminer:latest
+    container_name: lazdev_adminer
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    depends_on:
+      - db
+
+volumes:
+  mysql_data:
+  uploads_data:

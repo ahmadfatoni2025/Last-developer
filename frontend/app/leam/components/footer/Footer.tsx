@@ -38,7 +38,7 @@ export function Footer() {
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 group">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-[0_0_16px_rgba(99,102,241,0.4)]">
-                <img className="h-8 w-8" src="../assets/images/team/member-1.jpg" alt="Logo" />
+                <img className="h-5 w-12" src="../assets/images/img.jpg" alt="Logo" />
               </div>
               <span className="text-base font-semibold text-white">Lazdev</span>
             </Link>

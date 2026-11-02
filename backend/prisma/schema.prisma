@@ -1,0 +1,224 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContactStatus {
+  UNREAD
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  OTHER
+}
+
+// ─────────────────────────────────────────────────────
+// USER (Admin / Editor)
+// ─────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(255)
+  password     String   @db.VarChar(255)
+  role         Role     @default(EDITOR)
+  avatar       String?  @db.VarChar(500)
+  refreshToken String?  @db.Text
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  posts    Post[]
+  projects Project[]
+  medias   Media[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────
+// BLOG POST
+// ─────────────────────────────────────────────────────
+
+model Post {
+  id          String     @id @default(uuid())
+  title       String     @db.VarChar(255)
+  slug        String     @unique @db.VarChar(300)
+  excerpt     String?    @db.Text
+  content     String     @db.LongText
+  coverImage  String?    @db.VarChar(500)
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  readingTime Int?       @default(0) // in minutes
+  viewCount   Int        @default(0)
+  authorId    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  author   User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tags     PostTag[]
+  category Category?  @relation(fields: [categoryId], references: [id])
+  categoryId String?
+
+  @@index([slug])
+  @@index([status])
+  @@index([authorId])
+  @@map("posts")
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(100)
+  slug        String   @unique @db.VarChar(120)
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  posts Post[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        String    @id @default(uuid())
+  name      String    @unique @db.VarChar(50)
+  slug      String    @unique @db.VarChar(60)
+  createdAt DateTime  @default(now())
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model PostTag {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+// ─────────────────────────────────────────────────────
+// PROJECT PORTFOLIO
+// ─────────────────────────────────────────────────────
+
+model Project {
+  id          String        @id @default(uuid())
+  title       String        @db.VarChar(255)
+  slug        String        @unique @db.VarChar(300)
+  description String        @db.Text
+  content     String?       @db.LongText
+  coverImage  String?       @db.VarChar(500)
+  techStack   Json?         // ["React", "Node.js", ...]
+  liveUrl     String?       @db.VarChar(500)
+  githubUrl   String?       @db.VarChar(500)
+  status      ProjectStatus @default(DRAFT)
+  featured    Boolean       @default(false)
+  order       Int           @default(0)
+  authorId    String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([status])
+  @@index([featured])
+  @@map("projects")
+}
+
+// ─────────────────────────────────────────────────────
+// CONTACT
+// ─────────────────────────────────────────────────────
+
+model Contact {
+  id        String        @id @default(uuid())
+  name      String        @db.VarChar(100)
+  email     String        @db.VarChar(255)
+  subject   String?       @db.VarChar(255)
+  message   String        @db.Text
+  phone     String?       @db.VarChar(30)
+  status    ContactStatus @default(UNREAD)
+  ipAddress String?       @db.VarChar(50)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@map("contacts")
+}
+
+// ─────────────────────────────────────────────────────
+// NEWSLETTER
+// ─────────────────────────────────────────────────────
+
+model Subscriber {
+  id              String    @id @default(uuid())
+  email           String    @unique @db.VarChar(255)
+  name            String?   @db.VarChar(100)
+  isActive        Boolean   @default(true)
+  confirmedAt     DateTime?
+  unsubscribedAt  DateTime?
+  token           String?   @db.VarChar(255) // for unsubscribe/confirm link
+  createdAt       DateTime  @default(now())
+
+  @@index([email])
+  @@map("subscribers")
+}
+
+// ─────────────────────────────────────────────────────
+// MEDIA LIBRARY
+// ─────────────────────────────────────────────────────
+
+model Media {
+  id        String    @id @default(uuid())
+  filename  String    @db.VarChar(255)
+  original  String    @db.VarChar(255)
+  url       String    @db.VarChar(500)
+  type      MediaType @default(IMAGE)
+  mimeType  String    @db.VarChar(100)
+  size      Int       // bytes
+  width     Int?
+  height    Int?
+  alt       String?   @db.VarChar(255)
+  uploadedBy String
+  createdAt DateTime  @default(now())
+
+  uploader User @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@map("medias")
+}

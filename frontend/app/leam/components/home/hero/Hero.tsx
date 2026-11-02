@@ -3,7 +3,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import LaserFlow from './LaserFlow';
 import heroScreen from '../../../../../assets/images/img.jpg';
-import heroVideo from '../../../../../assets/videos/demo-vid-3.mp4';
+import heroVideo from '../../../../../assets/videos/project-vid.mp4';
 
 gsap.registerPlugin(ScrollTrigger);
 
