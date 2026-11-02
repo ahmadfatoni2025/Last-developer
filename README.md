@@ -50,7 +50,7 @@ Konten utama menyoroti:
 | Halaman `/project` | Placeholder | Route & meta tersedia, konten belum diisi |
 | Halaman `/team` | Placeholder | Route & meta tersedia, konten belum diisi |
 | Halaman `/contact` | Placeholder | Route & meta tersedia, konten belum diisi |
-| `backend/` | Kosong | Disiapkan untuk API/back end ke depannya |
+| `backend/` | ✅ Selesai | Express + Prisma + MySQL — Auth, Blog, Portfolio, Contact, Newsletter, Media, CMS |
 | `replika-desain-presisi/` | Selesai | Replika statis desain Stitch (arsip/referensi) |
 
 ---
@@ -396,3 +396,4 @@ Proyek internal **lazDev** (Laizs). Desain landing page leam direplika dari **St
 
 Untuk pertanyaan, hubungi tim melalui halaman `/contact` atau buka issue di repository ini.
 # last-dev
+# Last-developer
