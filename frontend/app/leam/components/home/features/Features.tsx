@@ -527,21 +527,6 @@ export function Features() {
           </div>
         </AnimatedContent>
 
-        {/* Feature stages */}
-        <AnimatedContent
-          className="relative mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-6 lg:grid-cols-4"
-          distance={48}
-          duration={0.7}
-          ease="power3.out"
-          blur={8}
-          scale={0.97}
-          stagger={0.08}
-          threshold={0.05}
-        >
-          {stages.map((stage) => (
-            <FeatureStage key={stage.step} stage={stage} />
-          ))}
-        </AnimatedContent>
       </div>
     </section>
   );

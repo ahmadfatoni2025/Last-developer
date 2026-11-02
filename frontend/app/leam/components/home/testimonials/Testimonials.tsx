@@ -113,7 +113,7 @@ function TestimonialCard({ t }: { t: Testimonial }) {
   return (
     <article
       data-card
-      className="group relative flex min-h-[500px] w-[84vw] max-w-[400px] shrink-0 snap-center select-none flex-col overflow-hidden rounded-[32px] border border-white/[0.07] bg-[#0b0f19] p-5 transition-colors duration-500 hover:border-white/[0.16] sm:w-[400px]"
+      className="group relative flex min-h-[500px] w-[84vw] max-w-[400px] shrink-0 snap-start select-none flex-col overflow-hidden rounded-[32px] border border-white/[0.07] bg-[#0b0f19] p-5 transition-colors duration-500 hover:border-white/[0.16] sm:w-[400px]"
     >
       <div
         className="pointer-events-none absolute inset-0 opacity-70 transition-opacity duration-500 group-hover:opacity-100"
@@ -168,7 +168,8 @@ function TestimonialCard({ t }: { t: Testimonial }) {
 
 export function Testimonials() {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const drag = useRef({ down: false, startX: 0, startLeft: 0 });
+  const drag = useRef({ down: false, startX: 0, startLeft: 0, lastX: 0, velocity: 0, lastTime: 0 });
+  const inertiaRaf = useRef(0);
   const [dragging, setDragging] = useState(false);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
@@ -187,6 +188,8 @@ export function Testimonials() {
   const getCenteredIndex = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return 0;
+    // Saat di posisi paling kiri, kartu pertama yang aktif
+    if (el.scrollLeft <= 8) return 0;
     const cards = Array.from(el.querySelectorAll<HTMLElement>('[data-card]'));
     const center = el.scrollLeft + el.clientWidth / 2;
     let best = 0;
@@ -209,10 +212,16 @@ export function Testimonials() {
     const card = cards[index];
     if (!card) return;
 
-    // Kalkulasi posisi presisi: titik tengah kartu == titik tengah container
-    const target = card.offsetLeft + card.offsetWidth / 2 - el.clientWidth / 2;
+    // Kartu pertama: mulai dari kiri (scrollLeft = 0).
+    // Kartu lain: tengah-kan di viewport.
+    let target: number;
+    if (index === 0) {
+      target = 0;
+    } else {
+      target = card.offsetLeft + card.offsetWidth / 2 - el.clientWidth / 2;
+    }
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    el.scrollTo({ left: target, behavior: smooth && !reduce ? 'smooth' : 'auto' });
+    el.scrollTo({ left: Math.max(0, target), behavior: smooth && !reduce ? 'smooth' : 'auto' });
   }, []);
 
   // Center kartu pertama setelah render selesai
@@ -262,7 +271,10 @@ export function Testimonials() {
     if (event.pointerType !== 'mouse' || event.button !== 0) return;
     const el = scrollerRef.current;
     if (!el) return;
-    drag.current = { down: true, startX: event.clientX, startLeft: el.scrollLeft };
+    const current = drag.current;
+    current.down = true;
+    current.startX = event.clientX;
+    current.startLeft = el.scrollLeft;
     el.setPointerCapture?.(event.pointerId);
     setDragging(true);
   };
@@ -271,6 +283,13 @@ export function Testimonials() {
     if (!drag.current.down) return;
     const el = scrollerRef.current;
     if (!el) return;
+    const now = performance.now();
+    const dt = now - drag.current.lastTime;
+    if (dt > 0) {
+      drag.current.velocity = (drag.current.lastX - event.clientX) / dt;
+    }
+    drag.current.lastX = event.clientX;
+    drag.current.lastTime = now;
     el.scrollLeft = drag.current.startLeft - (event.clientX - drag.current.startX);
   };
 
@@ -281,7 +300,25 @@ export function Testimonials() {
     const el = scrollerRef.current;
     if (el?.hasPointerCapture(event.pointerId)) el.releasePointerCapture(event.pointerId);
 
-    requestAnimationFrame(() => scrollToIndex(getCenteredIndex()));
+    // Momentum inertia — lanjutkan gerakan setelah lepas, lalu snap ke kartu
+    cancelAnimationFrame(inertiaRaf.current);
+    let velocity = drag.current.velocity * 14; // amplifikasi awal
+    const FRICTION = 0.88;
+    const MIN_VELOCITY = 0.5;
+
+    const runInertia = () => {
+      if (!el) return;
+      if (Math.abs(velocity) < MIN_VELOCITY) {
+        // Velocity cukup kecil — snap ke kartu terdekat
+        scrollToIndex(getCenteredIndex());
+        return;
+      }
+      el.scrollLeft += velocity;
+      velocity *= FRICTION;
+      inertiaRaf.current = requestAnimationFrame(runInertia);
+    };
+
+    inertiaRaf.current = requestAnimationFrame(runInertia);
   };
 
   const arrowClass =
@@ -324,54 +361,53 @@ export function Testimonials() {
         )}
       </div>
 
-      {/* 
-        Kontainer utama dibatasi max-w-7xl.
-        mx-auto memastikan selalu di tengah.
-      */}
-      <div className="relative mx-auto w-full max-w-7xl">
-        {/* Gradient Kiri */}
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-[#080b13] via-[#080b13]/80 to-transparent sm:w-20"
-          aria-hidden="true"
-        />
-        {/* Gradient Kanan */}
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[#080b13] via-[#080b13]/80 to-transparent sm:w-20"
-          aria-hidden="true"
-        />
+      {/* Carousel — dipotong kiri-kanan sesuai max-w-7xl, sejajar dengan header */}
+      <div className="mx-auto max-w-7xl overflow-hidden">
+        <div className="relative">
+          {/* Gradient kiri — fade in saat ada konten di kiri (canPrev) */}
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#080b13] via-[#080b13]/5 to-transparent transition-opacity duration-300 sm:w-24"
+            style={{ opacity: canPrev ? 1 : 0 }}
+            aria-hidden="true"
+          />
+          {/* Gradient kanan — selalu tampil selama ada konten di kanan */}
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#080b13] via-[#080b13]/5 to-transparent transition-opacity duration-300 sm:w-24"
+            style={{ opacity: canNext ? 1 : 0 }}
+            aria-hidden="true"
+          />
 
-        <div
-          ref={scrollerRef}
-          role="region"
-          aria-roledescription="carousel"
-          aria-label="Testimoni klien"
-          tabIndex={0}
-          onScroll={sync}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={stopDrag}
-          onPointerCancel={stopDrag}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowRight') {
-              event.preventDefault();
-              scrollByCard(1);
-            }
-            if (event.key === 'ArrowLeft') {
-              event.preventDefault();
-              scrollByCard(-1);
-            }
-          }}
-          className={`flex gap-4 overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/40 ${dragging ? 'cursor-grabbing snap-none' : 'cursor-grab snap-x snap-mandatory'
-            }`}
-          style={{
-            // Kalkulasi padding berdasarkan 100% dari max-w-7xl (bukan layar penuh)
-            paddingInline: 'max(20px, calc((100% - min(84vw, 400px)) / 2))',
-            scrollPaddingInline: 'max(20px, calc((100% - min(84vw, 400px)) / 2))',
-          }}
-        >
-          {testimonials.map((t) => (
-            <TestimonialCard key={t.company} t={t} />
-          ))}
+          <div
+            ref={scrollerRef}
+            role="region"
+            aria-roledescription="carousel"
+            aria-label="Testimoni klien"
+            tabIndex={0}
+            onScroll={sync}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={stopDrag}
+            onPointerCancel={stopDrag}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                scrollByCard(1);
+              }
+              if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                scrollByCard(-1);
+              }
+            }}
+            className={`flex gap-4 overflow-x-auto overscroll-x-contain pb-2
+              px-5 sm:px-8
+              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/40
+              ${dragging ? 'cursor-grabbing snap-none' : 'cursor-grab snap-x snap-mandatory'}`}
+          >
+            {testimonials.map((t) => (
+              <TestimonialCard key={t.company} t={t} />
+            ))}
+          </div>
         </div>
       </div>
     </section>
